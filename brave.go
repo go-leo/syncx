@@ -1,9 +1,5 @@
 package syncx
 
-func BraveGo(f func(), r func(p any)) {
-	go BraveDo(f, r)
-}
-
 func BraveDo(f func(), r func(p any)) {
 	fe := func() error {
 		f()
@@ -23,4 +19,20 @@ func BraveDoE(f func() error, r func(p any)) error {
 		}
 	}()
 	return f()
+}
+
+func BraveGo(f func(), r func(p any)) {
+	go BraveDo(f, r)
+}
+
+func BraveGoE(f func() error, r func(p any)) <-chan error {
+	errC := make(chan error)
+	go func() {
+		defer close(errC)
+		err := BraveDoE(f, r)
+		if err != nil {
+			errC <- err
+		}
+	}()
+	return errC
 }
