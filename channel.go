@@ -1,14 +1,23 @@
 package syncx
 
+import "sync"
+
 func CombineChannels[T any](buf int, channels ...<-chan T) <-chan T {
 	c := make(chan T, buf)
+	var wg sync.WaitGroup
 	for _, ch := range channels {
-		go func() {
+		wg.Add(1)
+		go func(ch <-chan T) {
+			defer wg.Done()
 			for v := range ch {
 				c <- v
 			}
-		}()
+		}(ch)
 	}
+	go func() {
+		wg.Wait()
+		close(c)
+	}()
 	return c
 }
 
